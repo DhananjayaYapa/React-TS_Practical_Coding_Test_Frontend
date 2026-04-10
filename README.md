@@ -1,0 +1,3 @@
+# 🏥 Retail & Optical Clinic Management System
+
+A frontend **React+TypeScript** application built with **React + TypeScript** integrating the public **JSONPlaceholder API ** following clean component design and custom hook architecture.Manage user data and fetched posts with debounced real-time filtering , interactive detail views , favorite toggling with priority sorting , local storage persistence , and strict TypeScript interfaces backed by unit testing.
