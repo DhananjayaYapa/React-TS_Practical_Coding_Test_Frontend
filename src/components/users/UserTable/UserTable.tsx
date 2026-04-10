@@ -1,16 +1,48 @@
-import { Box, Paper, Typography } from '@mui/material'
-import { DataGrid, type GridColDef } from '@mui/x-data-grid'
+import { Box, IconButton, Paper, Typography } from '@mui/material'
+import { Star, StarBorder } from '@mui/icons-material'
+import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid'
 import { useMemo } from 'react'
 import type { UserListItem } from '../../../utilities/models'
 
 interface UserTableProps {
   rows: UserListItem[]
   onRowClick?: (user: UserListItem) => void
+  favouriteIds?: Set<number>
+  onToggleFavourite?: (id: number) => void
 }
 
-const UserTable = ({ rows, onRowClick }: UserTableProps) => {
+const UserTable = ({
+  rows,
+  onRowClick,
+  favouriteIds = new Set(),
+  onToggleFavourite,
+}: UserTableProps) => {
   const columns = useMemo<GridColDef<UserListItem>[]>(
     () => [
+      {
+        field: 'favourite',
+        headerName: '',
+        width: 56,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        renderCell: (params: GridRenderCellParams<UserListItem>) => {
+          const isFav = favouriteIds.has(params.row.id)
+          return (
+            <IconButton
+              size="small"
+              aria-label={isFav ? `Unfavourite ${params.row.name}` : `Favourite ${params.row.name}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleFavourite?.(params.row.id)
+              }}
+              sx={{ color: isFav ? 'warning.main' : 'action.disabled' }}
+            >
+              {isFav ? <Star /> : <StarBorder />}
+            </IconButton>
+          )
+        },
+      },
       {
         field: 'name',
         headerName: 'Name',
@@ -36,7 +68,7 @@ const UserTable = ({ rows, onRowClick }: UserTableProps) => {
         flex: 0.9,
       },
     ],
-    []
+    [favouriteIds, onToggleFavourite]
   )
 
   return (
