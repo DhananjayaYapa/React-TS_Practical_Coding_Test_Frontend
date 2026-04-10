@@ -24,7 +24,7 @@ const Users = () => {
   const debouncedSearch = useDebounce(searchTerm, DEBOUNCE_DELAY)
 
   useEffect(() => {
-    dispatch(userActions.fetchUsers())
+    dispatch(userActions.fetchUsersRequest())
   }, [dispatch])
 
   // Client-side search filtering across name and email (debounced)

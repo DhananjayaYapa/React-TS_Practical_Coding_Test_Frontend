@@ -1,4 +1,3 @@
-// ──────────────────── API Response Models ────────────────────
 export interface Geo {
   lat: string
   lng: string
@@ -18,7 +17,6 @@ export interface Company {
   bs: string
 }
 
-/** Raw user object from JSONPlaceholder /users endpoint */
 export interface User {
   id: number
   name: string
@@ -29,8 +27,6 @@ export interface User {
   website: string
   company: Company
 }
-
-// ──────────────────── DTO / Table Models ────────────────────
 
 /** Flattened user row for table display */
 export interface UserListItem {
