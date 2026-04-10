@@ -1,11 +1,12 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { Alert, Box, Collapse, LinearProgress } from '@mui/material'
 
-import { PageHeader, UserTable } from '../../components'
+import { PageHeader, SearchInput, UserTable } from '../../components'
 import type { UserListItem } from '../../utilities/models'
-import { APP_ROUTES } from '../../utilities/constants'
+import { APP_ROUTES, DEBOUNCE_DELAY } from '../../utilities/constants'
+import { useDebounce } from '../../utilities/hooks'
 import { userActions } from '../../redux/actions'
 import type { AppDispatch, RootState } from '../../redux/store'
 
@@ -14,25 +15,28 @@ const Users = () => {
   const navigate = useNavigate()
 
   const fetchUsersState = useSelector((state: RootState) => state.user.fetchUsers)
-  const searchTerm = useSelector((state: RootState) => state.search.term)
 
   const rows = useMemo<UserListItem[]>(() => fetchUsersState.data || [], [fetchUsersState.data])
   const isLoading = fetchUsersState.isLoading
   const error = fetchUsersState.error
 
+  const [searchTerm, setSearchTerm] = useState('')
+  const debouncedSearch = useDebounce(searchTerm, DEBOUNCE_DELAY)
+
   useEffect(() => {
     dispatch(userActions.fetchUsers())
   }, [dispatch])
 
+  // Client-side search filtering across name and email (debounced)
   const filteredRows = useMemo(() => {
-    if (!searchTerm) return rows
+    if (!debouncedSearch) return rows
 
-    const term = searchTerm.toLowerCase()
+    const term = debouncedSearch.toLowerCase()
     return rows.filter((row) => {
-      const searchable = [row.name, row.email, row.companyName, row.city].join(' ').toLowerCase()
+      const searchable = [row.name, row.email].join(' ').toLowerCase()
       return searchable.includes(term)
     })
-  }, [rows, searchTerm])
+  }, [rows, debouncedSearch])
 
   const handleRowClick = (user: UserListItem) => {
     navigate(APP_ROUTES.USER_DETAIL.replace(':id', String(user.id)))
@@ -41,6 +45,14 @@ const Users = () => {
   return (
     <Box>
       <PageHeader title="Users" subtitle="Browse and manage user directory" />
+
+      <Box sx={{ mb: 2 }}>
+        <SearchInput
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Search by name or email..."
+        />
+      </Box>
 
       <Collapse in={!!error}>
         {error && (
