@@ -6,7 +6,7 @@ import { Alert, Box, Collapse, LinearProgress } from '@mui/material'
 import { PageHeader, SearchInput, UserTable } from '../../components'
 import type { UserListItem } from '../../utilities/models'
 import { APP_ROUTES, DEBOUNCE_DELAY } from '../../utilities/constants'
-import { useDebounce } from '../../utilities/hooks'
+import { useDebounce, useFavourites } from '../../utilities/hooks'
 import { userActions } from '../../redux/actions'
 import type { AppDispatch, RootState } from '../../redux/store'
 
@@ -23,20 +23,32 @@ const Users = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearch = useDebounce(searchTerm, DEBOUNCE_DELAY)
 
+  const { favouriteIds, toggleFavourite } = useFavourites()
+
   useEffect(() => {
     dispatch(userActions.fetchUsersRequest())
   }, [dispatch])
 
   // Client-side search filtering across name and email (debounced)
+  // Then sort favourited users to the top while preserving original order within each group
   const filteredRows = useMemo(() => {
-    if (!debouncedSearch) return rows
+    let result = rows
 
-    const term = debouncedSearch.toLowerCase()
-    return rows.filter((row) => {
-      const searchable = [row.name, row.email].join(' ').toLowerCase()
-      return searchable.includes(term)
+    if (debouncedSearch) {
+      const term = debouncedSearch.toLowerCase()
+      result = result.filter((row) => {
+        const searchable = [row.name, row.email].join(' ').toLowerCase()
+        return searchable.includes(term)
+      })
+    }
+
+    // Sort: favourites first, then non-favourites (stable sort preserves original order)
+    return [...result].sort((a, b) => {
+      const aFav = favouriteIds.has(a.id) ? 0 : 1
+      const bFav = favouriteIds.has(b.id) ? 0 : 1
+      return aFav - bFav
     })
-  }, [rows, debouncedSearch])
+  }, [rows, debouncedSearch, favouriteIds])
 
   const handleRowClick = (user: UserListItem) => {
     navigate(APP_ROUTES.USER_DETAIL.replace(':id', String(user.id)))
@@ -64,7 +76,12 @@ const Users = () => {
 
       {isLoading && <LinearProgress sx={{ mb: 1 }} />}
 
-      <UserTable rows={filteredRows} onRowClick={handleRowClick} />
+      <UserTable
+        rows={filteredRows}
+        onRowClick={handleRowClick}
+        favouriteIds={favouriteIds}
+        onToggleFavourite={toggleFavourite}
+      />
     </Box>
   )
 }
